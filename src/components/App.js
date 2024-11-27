@@ -66,18 +66,32 @@ function Item({ item, onTogglePacked, onDeleteItem }) {
         onChange={() => onTogglePacked(item.id)}
       />
       {item.description} ({item.quantity}){" "}
-      <button onClick={() => onDeleteItem(item.id)} className="delete-button">
-        ❌
-      </button>
+      <dev>
+        <button onClick={() => onDeleteItem(item.id)} className="delete-button">
+          ❌
+        </button>
+      </dev>
+
     </li>
   );
 }
 
 function PackingList({ items, onTogglePacked, onDeleteItem }) {
+  const [sortByPacked, setSortByPacked] = useState(false);
+
+  const sortedItems = sortByPacked
+    ? [...items].sort((a, b) => Number(a.packed) - Number(b.packed))
+    : items;
+
   return (
     <div className="list">
+      <div className="actions">
+        <button onClick={() => setSortByPacked(!sortByPacked)}>
+          {sortByPacked ? "Original" : "Sort by Not Packed"}
+        </button>
+      </div>
       <ul>
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             key={item.id}
             item={item}
@@ -95,31 +109,27 @@ function Stats({ items }) {
   const packedItems = items.filter((item) => item.packed).length;
   const packedPercentage = totalItems ? Math.round((packedItems / totalItems) * 100) : 0;
 
-  if (packedPercentage != 100) {
-    return (
-      <footer className="stats">
-        <em>
-          You have {totalItems} items in the list. You already packed {packedItems} ({packedPercentage}%).
-        </em>
-      </footer>
-    );
-  }
-  else {
-    return (
-      <footer className="stats">
-        <em>
-          You have fully packed for your trip.
-        </em>
-      </footer>
-    );
-  }
+  return (
+    <footer className="stats">
+      {packedPercentage === 100 ? (
+        <div>You have fully packed for your trip.</div>
+      ) : (
+        <div>
+          You have {totalItems} items in the list. You already packed {packedItems} (
+          {packedPercentage}%).
+        </div>
+      )}
+    </footer>
+  );
 }
 
 function App() {
   const [items, setItems] = useState([]);
+
   function handleAddItem(newItem) {
     setItems((prevItems) => [...prevItems, newItem]);
   }
+
   function handleTogglePacked(itemId) {
     setItems((prevItems) =>
       prevItems.map((item) =>
@@ -127,8 +137,13 @@ function App() {
       )
     );
   }
+
   function handleDeleteItem(itemId) {
     setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+  }
+
+  function handleClearAll() {
+    setItems([]);
   }
 
   return (
@@ -141,6 +156,9 @@ function App() {
         onDeleteItem={handleDeleteItem}
       />
       <Stats items={items} />
+      <button onClick={handleClearAll} className="clear-button">
+        Clear All
+      </button>
     </div>
   );
 }
